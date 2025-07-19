@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mines Gold Mabar</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 5px;
+      margin: 20px auto;
+      max-width: 320px;
+    }
+    .tile {
+      width: 35px;
+      height: 35px;
+      background: #eee;
+      border-radius: 5px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      font-weight: bold;
+      user-select: none;
+    }
+    .tile.clicked {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .chat-box {
+      margin-top: 20px;
+    }
+    #giliran {
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Mines Gold Mabar</h2>
+    <p>Room: <span id="roomDisplay"></span></p>
+    <p id="giliran">Menunggu giliran...</p>
+    <div class="grid" id="grid"></div>
+
+    <div class="chat-box">
+      <input type="text" id="chatInput" placeholder="Kirim pesan..." />
+      <button onclick="kirimPesan()">Kirim</button>
+      <div id="chatLog" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const username = localStorage.getItem("username");
+    const roomId = localStorage.getItem("roomId");
+    const jumlahBom = localStorage.getItem("jumlahBom");
+
+    if (!username || !roomId) {
+      window.location.href = "login.html";
+    }
+
+    document.getElementById("roomDisplay").textContent = roomId;
+
+    const socket = io();
+    let myTurn = false;
+    let gameOver = false;
+
+    socket.emit("joinRoom", { roomId, username, jumlahBom });
+
+    const grid = document.getElementById("grid");
+
+    // Buat grid 8x8 (64 ubin)
+    for (let i = 0; i < 64; i++) {
+      const tile = document.createElement("div");
+      tile.className = "tile";
+      tile.dataset.index = i;
+      tile.onclick = () => {
+        if (!myTurn || tile.classList.contains("clicked") || gameOver) return;
+        socket.emit("clickTile", { roomId, index: i });
+      };
+      grid.appendChild(tile);
+    }
+
+    socket.on("startGame", ({ turn }) => {
+      myTurn = (turn === username);
+      document.getElementById("giliran").textContent = myTurn ? "✨ Giliran Kamu" : "⏳ Tunggu giliran";
+    });
+
+    socket.on("tileResult", ({ index, value, nextTurn }) => {
+      const tile = document.querySelector(`.tile[data-index='${index}']`);
+      if (!tile.classList.contains("clicked")) {
+        tile.classList.add("clicked");
+        tile.textContent = value === "bomb" ? "💣" : "🪙";
+        if (value === "bomb" && myTurn) {
+          alert("💥 Kamu Kena Bom! Game Over.");
+          gameOver = true;
+        }
+        myTurn = (nextTurn === username);
+        document.getElementById("giliran").textContent = gameOver ? "Game Selesai" : (myTurn ? "✨ Giliran Kamu" : "⏳ Tunggu giliran");
+      }
+    });
+
+    function kirimPesan() {
+      const msg = document.getElementById("chatInput").value;
+      if (msg.trim()) {
+        socket.emit("chatMessage", { roomId, username, msg });
+        document.getElementById("chatInput").value = "";
+      }
+    }
+
+    socket.on("chatMessage", ({ username, msg }) => {
+      const div = document.createElement("div");
+      div.textContent = `${username}: ${msg}`;
+      document.getElementById("chatLog").appendChild(div);
+    });
+  </script>
+</body>
+</html>
