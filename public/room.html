@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Buat / Gabung Room</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h2>Halo, <span id="user"></span> 👋</h2>
+    <div class="card">
+      <button onclick="buatRoom()">🎮 Buat Room Baru</button>
+      <hr />
+      <input type="text" id="roomId" placeholder="Kode Room" />
+      <button onclick="gabungRoom()">🔗 Gabung Room</button>
+    </div>
+  </div>
+
+  <script>
+    const username = localStorage.getItem("username");
+    if (!username) window.location.href = "login.html";
+    document.getElementById("user").textContent = username;
+
+    function buatRoom() {
+      const kode = Math.random().toString(36).substring(2, 7).toUpperCase();
+      localStorage.setItem("roomId", kode);
+      window.location.href = "game.html";
+    }
+
+    function gabungRoom() {
+      const kode = document.getElementById("roomId").value.trim().toUpperCase();
+      if (kode.length >= 3) {
+        localStorage.setItem("roomId", kode);
+        window.location.href = "game.html";
+      } else {
+        alert("Masukkan kode room yang valid!");
+      }
+    }
+  </script>
+</body>
+</html>
