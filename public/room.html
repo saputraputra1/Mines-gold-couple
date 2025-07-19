@@ -5,26 +5,55 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Buat / Gabung Room</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    .hidden { display: none; }
+  </style>
 </head>
 <body>
   <div class="container">
     <h2>Halo, <span id="user"></span> 👋</h2>
+
+    <div id="buat-section" class="card">
+      <button onclick="toggleBomInput()">🎮 Buat Room Baru</button>
+      <div id="bomInput" class="hidden">
+        <input type="number" id="bomCount" placeholder="Jumlah Bom (1-40)" min="1" max="40"/>
+        <button onclick="buatRoom()">✔️ Buat Room</button>
+      </div>
+    </div>
+
+    <hr />
+
     <div class="card">
-      <button onclick="buatRoom()">🎮 Buat Room Baru</button>
-      <hr />
-      <input type="text" id="roomId" placeholder="Kode Room" />
+      <input type="text" id="roomId" placeholder="Kode Room (dari teman)" />
       <button onclick="gabungRoom()">🔗 Gabung Room</button>
     </div>
   </div>
 
   <script>
     const username = localStorage.getItem("username");
+    const isPlayer1 = username === "putra";
+
     if (!username) window.location.href = "login.html";
     document.getElementById("user").textContent = username;
 
+    if (!isPlayer1) {
+      document.getElementById("buat-section").style.display = "none";
+    }
+
+    function toggleBomInput() {
+      document.getElementById("bomInput").classList.toggle("hidden");
+    }
+
     function buatRoom() {
+      const bom = parseInt(document.getElementById("bomCount").value);
+      if (isNaN(bom) || bom < 1 || bom > 40) {
+        alert("Masukkan jumlah bom antara 1 sampai 40");
+        return;
+      }
+
       const kode = Math.random().toString(36).substring(2, 7).toUpperCase();
       localStorage.setItem("roomId", kode);
+      localStorage.setItem("jumlahBom", bom);
       window.location.href = "game.html";
     }
 
